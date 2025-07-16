@@ -8,6 +8,23 @@
 @using System.Linq
 
 <h1>@Model.Name</h1>
+@if (Model.Bookings != null && Model.Bookings.Any())
+{
+    <h4>Upcoming Bookings</h4>
+    <ul>
+        @foreach (var booking in Model.Bookings.OrderBy(b => b.StartTime))
+        {
+            <li>
+                <strong>@booking.StartTime - @booking.EndTime:</strong> @booking.Purpose (@booking.BookedBy)
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No upcoming bookings for this resource.</p>
+}
+
 
 <div class="mb-4">
     <h4>Resource Details</h4>
@@ -25,5 +42,6 @@
         <dd class="col-sm-9">@Model.IsAvailable</dd>
     </dl>
 </div>
+
 <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
 <a asp-action="List">Back to List</a>

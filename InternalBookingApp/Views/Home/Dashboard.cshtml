@@ -1,0 +1,40 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model IEnumerable<InternalBookingApp.Models.Entities.Booking>
+
+<div class="container mt-4">
+    <h2>Today's Bookings</h2>
+    @if (!Model.Any())
+    {
+        <p>No bookings for today.</p>
+    }
+    else
+    {
+        <table class="table table-bordered table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Resource</th>
+                    <th>Start</th>
+                    <th>End</th>
+                    <th>Booked By</th>
+                    <th>Purpose</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var booking in Model)
+                {
+                    <tr>
+                        <td>@booking.Resource?.Name</td>
+                        <td>@booking.StartTime.ToShortTimeString()</td>
+                        <td>@booking.EndTime.ToShortTimeString()</td>
+                        <td>@booking.BookedBy</td>
+                        <td>@booking.Purpose</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

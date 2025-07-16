@@ -1,16 +1,25 @@
-using System.Diagnostics;
+using InternalBookingApp.Data;
 using InternalBookingApp.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
+
+using InternalBookingApp.Models.Entities;
 namespace InternalBookingApp.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ApplicationDbContext context)
         {
-            _logger = logger;
+            _context = context;
         }
 
         public IActionResult Index()
@@ -28,5 +37,18 @@ namespace InternalBookingApp.Controllers
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
         }
+
+        public async Task<IActionResult> Dashboard()
+{
+    var today = DateTime.Today;
+    var upcomingBookings = await _context.Bookings
+        .Include(b => b.Resource)
+        .Where(b => b.StartTime.Date == today)
+        .OrderBy(b => b.StartTime)
+        .ToListAsync();
+
+    return View(upcomingBookings);
+}
+
     }
 }
