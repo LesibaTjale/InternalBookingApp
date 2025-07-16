@@ -1,12 +1,13 @@
+using InternalBookingApp.Data;
+using InternalBookingApp.Models;
+using InternalBookingApp.Models.Entities;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using InternalBookingApp.Data;
-using InternalBookingApp.Models.Entities;
 
 namespace InternalBookingApp.Controllers
 {
@@ -20,11 +21,32 @@ namespace InternalBookingApp.Controllers
         }
 
         // GET: Bookings
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int? resourceId, DateTime? date)
         {
-            var applicationDbContext = _context.Bookings.Include(b => b.Resource);
-            return View(await applicationDbContext.ToListAsync());
+            // Populate dropdown
+            ViewBag.Resources = new SelectList(_context.Resources, "Id", "Name");
+
+            var bookingsQuery = _context.Bookings
+                .Include(b => b.Resource)
+                .AsQueryable();
+
+            if (resourceId.HasValue)
+            {
+                bookingsQuery = bookingsQuery.Where(b => b.Id == resourceId.Value);
+            }
+
+            if (date.HasValue)
+            {
+                bookingsQuery = bookingsQuery.Where(b =>
+                    b.StartTime.Date == date.Value.Date ||
+                    b.EndTime.Date == date.Value.Date
+                );
+            }
+
+            var bookings = await bookingsQuery.OrderBy(b => b.StartTime).ToListAsync();
+            return View(bookings);
         }
+
 
         // GET: Bookings/Details/5
         public async Task<IActionResult> Details(int? id)
@@ -56,44 +78,70 @@ namespace InternalBookingApp.Controllers
         // POST: Bookings/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,ResourceId,StartTime,EndTime,BookedBy,Purpose")] Booking booking)
+        public async Task<IActionResult> Create(AddBookingViewModel model)
         {
             if (ModelState.IsValid)
             {
-                // ? Validate: EndTime must be after StartTime
-                if (booking.EndTime <= booking.StartTime)
+                var booking = new Booking
                 {
-                    ModelState.AddModelError("", "End time must be after start time.");
-                    ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
-                    return View(booking);
-                }
+                    ResourceId = model.ResourceId,
+                    StartTime = model.StartTime,
+                    EndTime = model.EndTime,
+                    BookedBy = model.BookedBy,
+                    Purpose = model.Purpose
+                };
 
-                // ? Validate: Booking conflict detection
-                bool conflict = _context.Bookings.Any(b =>
-                    b.ResourceId == booking.ResourceId &&
-                    ((booking.StartTime >= b.StartTime && booking.StartTime < b.EndTime) ||
-                     (booking.EndTime > b.StartTime && booking.EndTime <= b.EndTime) ||
-                     (booking.StartTime <= b.StartTime && booking.EndTime >= b.EndTime))
-                );
-
-                if (conflict)
-                {
-                    ModelState.AddModelError("", "This resource is already booked during the selected time.");
-                    ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
-                    return View(booking);
-                }
-
-                // ? Save booking if all checks pass
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
-            return View(booking);
+            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", model.ResourceId);
+            return View(model);
         }
+
+
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Create([Bind("Id,ResourceId,StartTime,EndTime,BookedBy,Purpose")] Booking booking)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        // ? Validate: EndTime must be after StartTime
+        //        if (booking.EndTime <= booking.StartTime)
+        //        {
+        //            ModelState.AddModelError("", "End time must be after start time.");
+        //            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+        //            return View(booking);
+        //        }
+
+        //        // ? Validate: Booking conflict detection
+        //        bool conflict = _context.Bookings.Any(b =>
+        //            b.ResourceId == booking.ResourceId &&
+        //            ((booking.StartTime >= b.StartTime && booking.StartTime < b.EndTime) ||
+        //             (booking.EndTime > b.StartTime && booking.EndTime <= b.EndTime) ||
+        //             (booking.StartTime <= b.StartTime && booking.EndTime >= b.EndTime))
+        //        );
+
+        //        if (conflict)
+        //        {
+        //            ModelState.AddModelError("", "This resource is already booked during the selected time.");
+        //            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+        //            return View(booking);
+        //        }
+
+        //        // ? Save booking if all checks pass
+        //        _context.Add(booking);
+        //        await _context.SaveChangesAsync();
+        //        return RedirectToAction(nameof(Index));
+        //    }
+
+        //    ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+        //    return View(booking);
+        //}
 
 
         // GET: Bookings/Edit/5

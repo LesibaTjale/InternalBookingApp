@@ -26,5 +26,7 @@ namespace InternalBookingApp.Models.Entities
         [Required]
         public string Purpose { get; set; }
 
+
+
     }
 }
