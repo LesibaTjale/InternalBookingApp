@@ -48,9 +48,10 @@ namespace InternalBookingApp.Controllers
         // GET: Bookings/Create
         public IActionResult Create()
         {
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Id");
+            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name");
             return View();
         }
+
 
         // POST: Bookings/Create
         // To protect from overposting attacks, enable the specific properties you want to bind to.
@@ -61,13 +62,39 @@ namespace InternalBookingApp.Controllers
         {
             if (ModelState.IsValid)
             {
+                // ? Validate: EndTime must be after StartTime
+                if (booking.EndTime <= booking.StartTime)
+                {
+                    ModelState.AddModelError("", "End time must be after start time.");
+                    ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+                    return View(booking);
+                }
+
+                // ? Validate: Booking conflict detection
+                bool conflict = _context.Bookings.Any(b =>
+                    b.ResourceId == booking.ResourceId &&
+                    ((booking.StartTime >= b.StartTime && booking.StartTime < b.EndTime) ||
+                     (booking.EndTime > b.StartTime && booking.EndTime <= b.EndTime) ||
+                     (booking.StartTime <= b.StartTime && booking.EndTime >= b.EndTime))
+                );
+
+                if (conflict)
+                {
+                    ModelState.AddModelError("", "This resource is already booked during the selected time.");
+                    ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+                    return View(booking);
+                }
+
+                // ? Save booking if all checks pass
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Id", booking.ResourceId);
+
+            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
             return View(booking);
         }
+
 
         // GET: Bookings/Edit/5
         public async Task<IActionResult> Edit(int? id)
