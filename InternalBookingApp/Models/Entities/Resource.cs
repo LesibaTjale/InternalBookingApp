@@ -14,7 +14,7 @@ namespace InternalBookingApp.Models.Entities
         public int Capacity { get; set; }
         public bool IsAvailable { get; set; }
 
-   //     public ICollection<Booking>? Bookings { get; set; }
+        public ICollection<Booking>? Bookings { get; set; }
 
     }
 }

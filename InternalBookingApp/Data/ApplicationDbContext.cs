@@ -1,5 +1,6 @@
 ﻿using InternalBookingApp.Models.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace InternalBookingApp.Data
 {
@@ -12,16 +13,20 @@ namespace InternalBookingApp.Data
 
         public DbSet<Resource> Resources { get; set; }
 
-        //public DbSet<Booking> Bookings { get; set; }
-        //protected override void OnModelCreating(ModelBuilder modelBuilder)
-        //{
-        //    base.OnModelCreating(modelBuilder);
+        public DbSet<Booking> Bookings { get; set; }
 
-        //    modelBuilder.Entity<Booking>()
-        //        .HasOne(b => b.Resource)
-        //        .WithMany(r => r.Bookings)
-        //        .HasForeignKey(b => b.ResourceId);
-        //}
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Resource>()
+                .HasMany(r => r.Bookings)
+                .WithOne(b => b.Resource)
+                .HasForeignKey(b => b.ResourceId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+
+       
 
     }
 }
