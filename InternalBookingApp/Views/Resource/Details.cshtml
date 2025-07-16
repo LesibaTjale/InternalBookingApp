@@ -7,16 +7,23 @@
 @model InternalBookingApp.Models.Entities.Resource
 @using System.Linq
 
+<h1>@Model.Name</h1>
 
-<h2> Resource Details </ h2 >
+<div class="mb-4">
+    <h4>Resource Details</h4>
+    <dl class="row">
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9">@Model.Description</dd>
 
-<div>
-    <h4>@Model.Name</h4>
-    <p><strong>Description:</strong> @Model.Description</p>
-    <p><strong>Location:</strong> @Model.Location</p>
-    <p><strong>Capacity:</strong> @Model.Capacity</p>
-    <p><strong>Available:</strong> @(Model.IsAvailable ? "Yes" : "No")</p>
+        <dt class="col-sm-3">Location</dt>
+        <dd class="col-sm-9">@Model.Location</dd>
+
+        <dt class="col-sm-3">Capacity</dt>
+        <dd class="col-sm-9">@Model.Capacity</dd>
+
+        <dt class="col-sm-3">Is Available</dt>
+        <dd class="col-sm-9">@Model.IsAvailable</dd>
+    </dl>
 </div>
-
 <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a> |
-<a asp-action="Index">Back to List</a>
+<a asp-action="List">Back to List</a>
