@@ -1,0 +1,56 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+@model List<InternalBookingApp.Models.Entities.Resource>
+
+
+<h1> All Resources</h1>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Location</th>
+            <th>Capacity</th>
+            <th>IsAvailable</th>
+
+        </tr>
+    </thead>
+
+    <tbody>
+
+        @foreach (var resource in Model)
+        {
+            <tr>
+
+                <td>@resource.Id</td>
+                <td>@resource.Name</td>
+                <td>@resource.Description</td>
+                <td>@resource.Location</td>
+                <td>@resource.Capacity</td>
+                <td>@resource.IsAvailable</td>
+
+                <td>
+                    @* <a class="btn btn-primary" asp-controller="Resource" asp-action="Edit" asp-router-id="@resource.Id" >Edit</a> *@
+                    <a asp-action="Edit" asp-route-id="@resource.Id" class="btn btn-primary">Edit</a>
+
+                </td>
+
+
+
+            </tr>
+        }
+
+
+    </tbody>
+
+
+
+
+
+
+</table>
