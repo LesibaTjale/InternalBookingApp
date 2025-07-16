@@ -49,9 +49,8 @@ else
 
         <div class="mt-3">
             <label class="form-label">Capacity</label>
-            <input type="capacity" class="form-control" asp-for="Capacity" />
-
-
+            <input type="number" class="form-control" asp-for="Capacity" />
+            <span asp-validation-for="Capacity" class="text-danger"></span>
         </div>
 
 
