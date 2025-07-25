@@ -17,7 +17,7 @@ namespace InternalBookingApp.Controllers
 
         public BookingsController(ApplicationDbContext context)
         {
-            _context = context;
+           this._context = context;
         }
 
         // GET: Bookings
@@ -59,6 +59,7 @@ namespace InternalBookingApp.Controllers
             var booking = await _context.Bookings
                 .Include(b => b.Resource)
                 .FirstOrDefaultAsync(m => m.Id == id);
+
             if (booking == null)
             {
                 return NotFound();
@@ -94,57 +95,43 @@ namespace InternalBookingApp.Controllers
                     Purpose = model.Purpose
                 };
 
+                // ? Validate: EndTime must be after StartTime
+                        if (booking.EndTime <= booking.StartTime)
+                        {
+                            ModelState.AddModelError("", "End time must be after start time.");
+                           ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+                           return View(booking);
+                        }
+
+                        // ? Validate: Booking conflict detection
+                        bool conflict = _context.Bookings.Any(b =>
+                            b.ResourceId == booking.ResourceId &&
+                            ((booking.StartTime >= b.StartTime && booking.StartTime < b.EndTime) ||
+                             (booking.EndTime > b.StartTime && booking.EndTime <= b.EndTime) ||
+                             (booking.StartTime <= b.StartTime && booking.EndTime >= b.EndTime))
+                        );
+
+                       if (conflict)
+                      {
+                            ModelState.AddModelError("", "This resource is already booked during the selected time.");
+                            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
+                            return View(booking);
+                        }
+
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
 
-            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", model.ResourceId);
+          
             return View(model);
         }
 
 
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Create([Bind("Id,ResourceId,StartTime,EndTime,BookedBy,Purpose")] Booking booking)
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        // ? Validate: EndTime must be after StartTime
-        //        if (booking.EndTime <= booking.StartTime)
-        //        {
-        //            ModelState.AddModelError("", "End time must be after start time.");
-        //            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
-        //            return View(booking);
-        //        }
-
-        //        // ? Validate: Booking conflict detection
-        //        bool conflict = _context.Bookings.Any(b =>
-        //            b.ResourceId == booking.ResourceId &&
-        //            ((booking.StartTime >= b.StartTime && booking.StartTime < b.EndTime) ||
-        //             (booking.EndTime > b.StartTime && booking.EndTime <= b.EndTime) ||
-        //             (booking.StartTime <= b.StartTime && booking.EndTime >= b.EndTime))
-        //        );
-
-        //        if (conflict)
-        //        {
-        //            ModelState.AddModelError("", "This resource is already booked during the selected time.");
-        //            ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
-        //            return View(booking);
-        //        }
-
-        //        // ? Save booking if all checks pass
-        //        _context.Add(booking);
-        //        await _context.SaveChangesAsync();
-        //        return RedirectToAction(nameof(Index));
-        //    }
-
-        //    ViewBag.ResourceId = new SelectList(_context.Resources, "Id", "Name", booking.ResourceId);
-        //    return View(booking);
-        //}
 
 
         // GET: Bookings/Edit/5
+        [HttpGet]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -161,41 +148,28 @@ namespace InternalBookingApp.Controllers
             return View(booking);
         }
 
-        // POST: Bookings/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,ResourceId,StartTime,EndTime,BookedBy,Purpose")] Booking booking)
+        public async Task<IActionResult> Edit(Booking viewModel)
         {
-            if (id != booking.Id)
+            var booking = await _context.Bookings.FindAsync(viewModel.Id);
+
+            if (booking is not null)
             {
-                return NotFound();
+                booking.StartTime = viewModel.StartTime;
+                booking.EndTime = viewModel.EndTime;
+                booking.BookedBy = viewModel.BookedBy;
+                booking.Purpose = viewModel.Purpose;              
+                await _context.SaveChangesAsync();
+
             }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(booking);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!BookingExists(booking.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["ResourceId"] = new SelectList(_context.Resources, "Id", "Id", booking.ResourceId);
-            return View(booking);
+            return RedirectToAction(nameof(Index));
+
+
         }
+
+     
 
         // GET: Bookings/Delete/5
         public async Task<IActionResult> Delete(int? id)
@@ -215,6 +189,7 @@ namespace InternalBookingApp.Controllers
 
             return View(booking);
         }
+
 
         // POST: Bookings/Delete/5
         [HttpPost, ActionName("Delete")]

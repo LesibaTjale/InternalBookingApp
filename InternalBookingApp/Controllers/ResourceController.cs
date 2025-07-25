@@ -101,36 +101,18 @@ namespace InternalBookingApp.Controllers
 
         }
 
-        public async Task<IActionResult> Details(Guid? id)
-        {
-            if (id == null || dbContext.Resources == null)
-            {
-                return NotFound();
-            }
 
-            var resource = await dbContext.Resources
-                .FirstOrDefaultAsync(m => m.Id == id);
+        public IActionResult Details(Guid id)
+        {
+            var resource = dbContext.Resources
+                .Include(r => r.Bookings)
+                .FirstOrDefault(r => r.Id == id);
 
             if (resource == null)
-            {
                 return NotFound();
-            }
 
             return View(resource);
         }
-
-
-        //public IActionResult Details(Guid id)
-        //{
-        //    var resource = dbContext.Resources
-        //        .Include(r => r.Bookings)
-        //        .FirstOrDefault(r => r.Id == id);
-
-        //    if (resource == null)
-        //        return NotFound();
-
-        //    return View(resource);
-        //}
 
 
 
